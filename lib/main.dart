@@ -1,121 +1,166 @@
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const GuideWayApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class GuideWayApp extends StatelessWidget {
+  const GuideWayApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: .fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      debugShowCheckedModeBanner: false, // 오른쪽 위 디버그 띠 숨기기
+      theme: ThemeData(primarySwatch: Colors.blue, useMaterial3: true),
+      home: const OneStepViewScreen(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class OneStepViewScreen extends StatefulWidget {
+  const OneStepViewScreen({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<OneStepViewScreen> createState() => _OneStepViewScreenState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _OneStepViewScreenState extends State<OneStepViewScreen> {
+  // AI가 분할해준 시나리오 (데이터)
+  final List<String> _tasks = [
+    "신분증 챙기기",
+    "집 앞 버스 정류장 가기",
+    "700번 버스 타기",
+    "시청역에서 내리기",
+    "은행 번호표 뽑기",
+  ];
+  int _currentIndex = 0; // 현재 몇 번째 단계인지
 
-  void _incrementCounter() {
+  void _nextStep() {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      if (_currentIndex < _tasks.length - 1) {
+        _currentIndex++;
+      } else {
+        // 모든 단계 완료 시 알림
+        _showCompleteDialog();
+      }
     });
+  }
+
+  void _showCompleteDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("참 잘했어요! 🎉", textAlign: TextAlign.center),
+        content: const Text("모든 일을 안전하게 마쳤습니다."),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              setState(() => _currentIndex = 0); // 처음으로 리셋
+            },
+            child: const Text("확인", style: TextStyle(fontSize: 20)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    // 진행률 계산 (0.0 ~ 1.0)
+    double progress = (_currentIndex + 1) / _tasks.length;
+
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFF), // 눈이 편안한 연한 하늘색 배경
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: const Text(
+          "GUIDEWAY",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 0,
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
+      body: Padding(
+        padding: const EdgeInsets.all(30.0),
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: .center,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
+            const Text(
+              "🎯 지금 할 일",
+              style: TextStyle(fontSize: 22, color: Colors.grey),
+            ),
+            const SizedBox(height: 20),
+
+            // [One-Step View] 현재 할 일 하나만 강조하는 카드
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(30),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 20,
+                  ),
+                ],
+              ),
+              child: Text(
+                _tasks[_currentIndex],
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 36,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF2D3142),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 60),
+
+            // [시각적 타임 바] 현재 진행 상황을 게이지로 표시
+            const Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("시작", style: TextStyle(fontSize: 18)),
+                Text("도착", style: TextStyle(fontSize: 18)),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 25,
+                backgroundColor: Colors.grey[200],
+                color: Colors.blueAccent,
+              ),
+            ),
+
+            const SizedBox(height: 80),
+
+            // [크고 누르기 쉬운 버튼]
+            SizedBox(
+              width: double.infinity,
+              height: 80,
+              child: ElevatedButton(
+                onPressed: _nextStep,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF4A90E2),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                ),
+                child: const Text(
+                  "다 했어요 ➡️",
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                ),
+              ),
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
       ),
     );
   }
