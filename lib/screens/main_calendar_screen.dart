@@ -13,13 +13,13 @@ class MainCalendarScreen extends StatefulWidget {
 
 class _MainCalendarScreenState extends State<MainCalendarScreen> {
   Map<int, List<TaskItem>> calendarData = {
+    25: [],
     26: [
       TaskItem(
-        title: "은행 가기",
+        title: "은행 가기 (오전 11:00까지)",
         subSteps: ["신분증 챙기기", "버스 타기", "번호표 뽑기", "창구 방문하기"],
       ),
     ],
-    25: [],
     27: [],
     28: [],
     29: [],
@@ -57,6 +57,7 @@ class _MainCalendarScreenState extends State<MainCalendarScreen> {
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 15),
+
           Container(
             margin: const EdgeInsets.symmetric(horizontal: 20),
             padding: const EdgeInsets.all(15),
@@ -124,6 +125,7 @@ class _MainCalendarScreenState extends State<MainCalendarScreen> {
               }).toList(),
             ),
           ),
+
           Expanded(
             child: Container(
               margin: const EdgeInsets.all(20),
@@ -133,7 +135,7 @@ class _MainCalendarScreenState extends State<MainCalendarScreen> {
                 borderRadius: BorderRadius.circular(25),
               ),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start, // 👈 오타 완벽 수정!
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     "📋 $selectedDay일의 퀘스트 목록",
@@ -168,7 +170,7 @@ class _MainCalendarScreenState extends State<MainCalendarScreen> {
                                 title: Text(
                                   task.title,
                                   style: TextStyle(
-                                    fontSize: 20,
+                                    fontSize: 19,
                                     fontWeight: FontWeight.bold,
                                     decoration: task.isCompleted
                                         ? TextDecoration.lineThrough
@@ -186,6 +188,7 @@ class _MainCalendarScreenState extends State<MainCalendarScreen> {
               ),
             ),
           ),
+
           Padding(
             padding: const EdgeInsets.only(bottom: 30, left: 20, right: 20),
             child: Row(
@@ -201,29 +204,40 @@ class _MainCalendarScreenState extends State<MainCalendarScreen> {
                       ),
                     ),
                     onPressed: () async {
-                      final newTaskTitle = await Navigator.push(
+                      final dynamic resultData = await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => const AddTaskScreen(),
                         ),
                       );
-                      if (newTaskTitle != null &&
-                          newTaskTitle.toString().isNotEmpty) {
+
+                      // ⭐ 넘어온 각각의 할 일 리스트를 돌면서 각각 지정된 날짜 방으로 똑똑하게 분류 분배!
+                      if (resultData != null &&
+                          resultData is List<Map<String, dynamic>>) {
                         setState(() {
-                          if (calendarData[selectedDay] == null) {
-                            calendarData[selectedDay] = [];
+                          for (var taskInfo in resultData) {
+                            String taskTitle = taskInfo['title'];
+                            int? designatedDay = taskInfo['targetDay'];
+                            String timeConstraint = taskInfo['timeText'];
+
+                            // 날짜 안 정했으면 메인에서 켜놓고 있던 날짜로 자동 배정
+                            int finalDay = designatedDay ?? selectedDay;
+
+                            if (calendarData[finalDay] == null) {
+                              calendarData[finalDay] = [];
+                            }
+
+                            calendarData[finalDay]!.add(
+                              TaskItem(
+                                title: "$taskTitle ($timeConstraint)",
+                                subSteps: [
+                                  "[$taskTitle] 준비물 확인하기",
+                                  "차분하게 시작하기",
+                                  "안전하게 완료하기",
+                                ],
+                              ),
+                            );
                           }
-                          calendarData[selectedDay]!.add(
-                            TaskItem(
-                              title: newTaskTitle,
-                              subSteps: [
-                                "[$newTaskTitle] 준비하기",
-                                "목적지로 이동하기",
-                                "차분하게 실행하기",
-                                "마무리하기",
-                              ],
-                            ),
-                          );
                         });
                       }
                     },
@@ -237,6 +251,7 @@ class _MainCalendarScreenState extends State<MainCalendarScreen> {
                   ),
                 ),
                 const SizedBox(width: 15),
+
                 Expanded(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
@@ -254,15 +269,17 @@ class _MainCalendarScreenState extends State<MainCalendarScreen> {
                                 .isEmpty)
                         ? null
                         : () async {
-                            final uncompletedTasks = calendarData[selectedDay]!
-                                .where((t) => !t.isCompleted)
-                                .toList();
+                            final List<TaskItem> uncompletedTasks =
+                                calendarData[selectedDay]!
+                                    .where((t) => !t.isCompleted)
+                                    .toList();
+
                             if (uncompletedTasks.isNotEmpty) {
                               await Navigator.push(
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) => OneStepPlayScreen(
-                                    task: uncompletedTasks.first,
+                                    uncompletedTasks: uncompletedTasks,
                                   ),
                                 ),
                               );
